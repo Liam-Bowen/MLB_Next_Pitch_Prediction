@@ -157,25 +157,281 @@ plt.show()
 
 ## Assessment & Evaluation
 
-This project evaluates both baseline and Transformer models using:
+This project evaluates two models for next-pitch prediction:
+1. Baseline: Multiclass Logistic Regression
+2. Proposed Model: Custom Decoder-Only Transformer
 
-1. Overall Accuracy
-2. Top-k Accuracy
-3. Calibration Metrics
-   - Brier Score
-   - Expected Calibration Error (ECE)
-   - Temperature Scaling
-4. Per-Pitch-Type Accuracy
-   Shows which pitches (FF, SL, CU, CH, etc.) are easiest/hardest to predict
-5. Count-Based Heatmap
+Both models are evaluated with:
+1. Top-1 Accuracy
+2. Top-3 Accuracy
+3. Brier Score
+4. Expected Calibration Error (ECE)
+
+The transformer is evaluated with:
+1. Per-Pitch Type Accuracy
+2. Per-Pitcher Accuracy
+3. Count-Based Accuracy Heatmap
+4. Reliability Diagram
+
+
+
+### Prediction Accuracy
+
+Top-k Accuracy Comparison
+|Model | Top-1 Accuracy | Top-3 Accuracy |
+|:----- |:----- |:----- |
+| Logistic Regression | 0.362 | 0.660 |
+| Transformer | 0.466 | 0.895 |
+
+The transformer provides a strong lift in both single-prediction accuracy and broader Top-3 predictive coverage.
+
+### Calibration Metrics
+
+Brier Score (lower is better)
+|Model | Brier Score |
+|:----- |:----- |
+| Logistic Regression| 0.7975 |
+| Transformer | 0.6491 |
+| Transformer (Temp-Scaled) | 0.6484 |
+
+Expected Calibration Error (ECE) (lower is better)
+|Model | ECE |
+|:----- |:----- |
+| Logistic Regression | 0.0289 |
+|Transformer | 0.0343 |
+| Transformer (Temp-Scaled) | 0.0274 |
+
+The transformer has a better Brier Score and ECE than the baseline model. Introducing temperature scaling to account for the overconfidence of the transformer slightly improves the Brier Score and significantly improves the ECE.
+
+### Reliability Diagram
+![reliability_diagram](reliability_diagram.png)
+
+The transformer displays moderate underconfidence/overconfidence depending on probability bin, but temperature scaling significantly improves calibration. 
+
+* Learned temperature: 1.0299
+
+### Per-Pitch Type Accuracy
+  Shows which pitches (FF, CH, CU, SL, etc.) are the easiest/hardest to predict
+
+|Pitch Type | Accuracy | n |
+|:----- |:----- |:----- |
+|Knuckleball| 0.965  |144|
+|Four-seam Fastball|0.834  |251469|
+|Sinker|0.823  |52992|
+|Two-seam Fastball|0.439  |59181|
+|Cutter|0.290  |45118|
+|Splitter|0.153  |10265|
+|Slider|0.141  |123067|
+|Curveball|0.084  |61742|
+|Changeup|0.065  |77604|
+|Knuckle Curve|0.043  |15028|
+|Eephus|0.000  |49|
+|Pitchout|0.000  |30|
+
+Interpretation
+  - Knuckleballs are the easiest to predict, but are a rare pitch
+  - Four-seam fastballs and sinkers are very common pitches, and have a high accuracy score
+  - Pitches including slider, curveball, and knuckle curve have are very similar pitches, thus causing more variability
+  - The distinct and common pitches are easiest to predict
+  - Pitches that are similar to one another are going to have lower accuracy 
+   
+### Per-Pitcher-Type Accuracy
+   Shows which pitchers are easiest/hardest to predict
+![pitcher-accuracy](top_pitchers.png)
+
+![pitcher-accuracy2](bottom_pitchers.png)
+
+| Pitcher| Accuracy |
+|:----- |:----- |
+|Sean Doolittle| 0.875 |
+| Zach Britton | 0.863 |
+| Josh Hader | 0.829 |
+|Tyler Clippard | 0.271 | 
+| Clay Bucholz | 0.209|
+| Mike Leake | 0.202 |
+
+Interpretation
+  - Some pitchers have extremely consistent pitch patterns (Doolittle, Britton, Hader)
+  - These pitchers throw only one or two pitches 
+  - Other show more variability (Clippard, Bucholz, Leake)
+  - These pitchers throw upwards of five different pitches
+  - The model performs best when pitchers rely heavily on only one or two pitch types
+  
+### Count-Based Heatmap
    Visualizes how model accuracy changes in different ball-strike counts
-
+![heatmap](count_heatmap.png)
+  Interpretation
+    - Model is strongest in hitter-advantage counts (3-0, 3-1, 2-0)
+    - Accuracy drops in pitcher-advantage counts (0-2, 0-1)
+    - The count with the lowest overall accuracy is 0-1
+    - This aligns with real-world baseball strategy
+        - Pitchers are going to be more limited in their options when in hitter-advantage counts, thus leading to a more predictable sequence
+        - In pitcher-advantage counts, pitchers have more freedom to mix their sequencing more
 
 ## Model & Data Cards
 
+### Model: Transofmer Pitch Predictor (TPP-Base)
+| Field| Description |
+|:----- |:----- |
+| Architecture | Decoder-only Transformer |
+| Layers | 2 |
+| Attention Heads | 4|
+|Window Size | 32 pitches |
+|Inputs | pitch tokens, balls, strikes, pitcher ID, first-pitch flag, score, inning, outs, runners on base, pitcher right or left handed, hitter right or left handed |
+|Outputs | 17 pitch types |
+| Loss | Cross-entropy |
+| Optimizer | AdamW|
 
+### Dataset Card
 
+| Property| Value |
+|:----- |:----- |
+| Source | MLB Pitch Data 2015-2018 |
+| Total pitches | > 1 million |
+| Features | pitch type, balls, strikes, pitcher ID, inning, score, etc.|
+|Sequence Format | Per-pitcher chronological pitch windows |
 
+## Critical Analysis
 
+### Strengths
+- Transformer outperforms simple baselines
+- Handles long-term sequence patterns
+- Strong calibration after temperature scaling
+- Works well for pitcher with consistent arsenals
 
+### Weaknesses
+- Performance varies significantly by pitcher
+- Some pitch types have low data volume
+- Long-tail pitchers (< 100 pitches) produce noisy estimates
+- Does not currently include
+    - Batter tendencies
+    - Pitch location
+    - Velocity or movement data
 
+### Next Steps
+- Add pitch location embedding (included in dataset)
+- Add velocity and movement embedding (included in dataset)
+- Use a larger window (64+)
+- Fine-tune a pretrained transformer on pitch sequences
+- Explore pitcher-specific adapters or LoRA
+
+## Setup
+### Requirements
+Your environment should include:
+```nginx
+Python >= 3.9
+PyTorch >= 2.0.0
+numpy >= 1.23
+pandas >= 1.5
+matplotlib >= 3.7
+seaborn >= 0.12
+scikit-learn >= 1.2
+tqdm >= 4.65
+```
+
+If using GPU acceleration:
+```cpp
+CUDA >= 11.7  (optional, but recommended for training)
+```
+
+### Installation
+1. Clone the repository
+```bash
+git clone https://github.com/Liam-Bowen/mlb-pitch-transformer.git
+cd mlb-pitch-transformer
+```
+2. Create a virtual environment
+```bash
+python3 -m venv venv
+source venv/bin/activate      # MacOS/Linux
+venv\Scripts\activate         # Windows
+```
+
+3. Install dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### Data Setup
+This project uses the following data files:
+- pitches.csv - pitch-by-pitch dataset for 2015-2018 (used to create training set)
+- atbats.csv - dataset consisting of information over the course of an at-bat for 2015-2018 (used in creation of training set)
+- 2019_pitches.csv - pitch-by-pitch dataset for 2019 (used to create testing set)
+- 2019_atbats.csv - dataset consisting of information over the course of an at-bat for 2019 (used in creation of testing set)
+- player_names.csv - mapping from pitcher ID -> first/last name
+
+Other datasets coming from Kaggle not used in this project (but could be used in further analysis) include:
+- ejections.csv
+- games.csv
+- 2019_games.csv
+
+Place your data in the following structure:
+```kotlin
+mlb_next_pitch_prediction/
+│
+├── data/
+│   ├── 2019_atbats.csv
+│   ├── 2019_games.csv
+│   ├── 2019_pitches.csv
+│   ├── atbats.csv
+│   ├── ejections.csv
+│   ├── games.csv
+│   ├── pitches.csv
+│   ├── player_names.csv
+```
+
+### Quick Start
+1. Open the main notebook
+```bash
+jupyter notebook Final_Project.ipynb
+```
+
+This notebook:
+- Loads data
+- Preprocesses pitch sequences
+- Trains the Logistic Regression baseline
+- Trains the Transformer model
+- Computes calibration metrics
+- Generates all figures (heatmaps, calibration curves, bar charts)
+
+2. Run the Transformer Inference Demo
+Once the model has been trained:
+```python
+from model import PitchTransformer
+import torch
+
+model = PitchTransformer.load_from_checkpoint("checkpoints/transformer_best.pt")
+model.eval()
+```
+Run a sample prediction:
+```python
+sample = test_dataset[42]
+logits = model(sample["inputs"].unsqueeze(0))
+pred = logits.argmax(dim=1).item()
+print(pred)
+```
+
+### Reproducing Figures
+Each visualization can be reproduced by running the associated section inside Final_Project.ipynb including:
+- Count-based accuracy heatmap
+- Pitch-type accuracy table
+- Reliability (calibration curve)
+- Per-pitcher accuracy bar chart
+
+## Resources
+
+1. Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A. N., Kaiser, Ł., & Polosukhin, I. (2017). *Attention is All You Need*.  
+   https://arxiv.org/abs/1706.03762
+
+2. Schale, P. (2019). MLB Pitch Data (2015–2018). Kaggle Dataset.
+https://www.kaggle.com/datasets/pschale/mlb-pitch-data-20152018
+
+3. Guo, C., Pleiss, G., Sun, Y., & Weinberger, K. Q. (2017).
+On Calibration of Modern Neural Networks.
+International Conference on Machine Learning (ICML 2017).
+https://arxiv.org/abs/1706.04599
+
+4. Paszke, A., Gross, S., Massa, F., et al. (2019).
+PyTorch: An Imperative Style, High-Performance Deep Learning Library.
+Advances in Neural Information Processing Systems (NeurIPS 2019).
+https://arxiv.org/abs/1912.01703
