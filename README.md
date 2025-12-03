@@ -1,8 +1,8 @@
 # Next Pitch Prediction in Major League Baseball Using Transformer Models
 
-## Author: Liam Bowen
-## School: Vanderbilt University
-## Course: Generative AI Models in Theory & Practice
+##### Author: Liam Bowen
+##### School: Vanderbilt University
+##### Course: Generative AI Models in Theory & Practice
 
 ## Summary
 
