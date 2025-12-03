@@ -215,7 +215,7 @@ The transformer has substantially better Brier Score than the baseline model, re
 
 The plot below shows only the temperature-scaled Transformer, as this version is used in the fianl evaluation.
 
-![reliability_diagram](reliability_diagram.png)
+![reliability_diagram](images/reliability_diagram.png)
 
 The reliability diagram shows the temperature-scaled Transformer, plotted against the ideal diagonal line representing perfect calibration. After applying temperature scaling, the calibrated model's curve closely tracks the diagonal, meaning its predicted probabilities now correspond well to actual empirical accuracy.
 
@@ -259,11 +259,11 @@ Shows which pitchers are easiest/hardest to predict
 
 Top 10 Most Predictable Pitchers
 
-![pitcher-accuracy](top_pitchers.png)
+![pitcher-accuracy](images/top_pitchers.png)
 
 Bottom 10 Least Predictable Pitchers
 
-![pitcher-accuracy2](bottom_pitchers.png)
+![pitcher-accuracy2](images/bottom_pitchers.png)
 
 | Pitcher| Accuracy |
 |:----- |:----- |
@@ -283,7 +283,7 @@ Interpretation
   
 ### Count-Based Heatmap
    Visualizes how model accuracy changes in different ball-strike counts
-![heatmap](count_heatmap.png)
+![heatmap](images/count_heatmap.png)
   Interpretation
     - Model is strongest in hitter-advantage counts (3-0, 3-1, 2-0)
     - Accuracy drops in pitcher-advantage counts (0-2, 0-1)
