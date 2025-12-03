@@ -18,7 +18,7 @@ P(\text{next pitch} \mid \text{previous pitches + context})
 - [Overview](#overview)
 - [Methodology](#methodology)
 - [Implementation & Demo](#implementation)
-- [Assessment &Evaluation](#evaluation)
+- [Assessment & Evaluation](#evaluation)
 - [Model & Data Cards](#model--data-cards)
 - [Critical Analysis](#critical-analysis)
 - [Resources](#resources)
@@ -50,6 +50,7 @@ This project follows a structured machine learning pipeline:
    
 2. Baseline Model: Multiclass Logistic Regression
   - Inputs:
+      - Pitch Tokens (last 32 pitch types thrown by that pitcher)
       - Pitch count (balls/strikes)
       - Game state (score differential)
   - Outputs: probabilites over 17 pitch types
@@ -67,9 +68,16 @@ This project follows a structured machine learning pipeline:
       - Balls
       - Strikes
       - First-pitch flag
-      - Pitcher ID
+      - Pitcher ID (To learn pitcher-specific tendencies)
+      - Score differential
+      - Inning
+      - Outs
+      - Runners on base
+      - Pitcher handedness
+      - Batter handedness
   - 4-head self-attention
-  - Sequence length = 32 (last 32 pitches thrown by that pitcher)
+  - 2 Transformer decoder layers
+  - Sequence length = 32
   - Output: softmax over 17 pitch types
 
 4. Model Calibration
@@ -201,12 +209,22 @@ Expected Calibration Error (ECE) (lower is better)
 |Transformer | 0.0343 |
 | Transformer (Temp-Scaled) | 0.0274 |
 
-The transformer has a better Brier Score and ECE than the baseline model. Introducing temperature scaling to account for the overconfidence of the transformer slightly improves the Brier Score and significantly improves the ECE.
+The transformer has substantially better Brier Score than the baseline model, reflecting sharper probability estimates. While the raw ECE is slightly worse than the baseline, introducing temperature scaling corrects the overconfidence of the transformer slightly improves the Brier Score and significantly improves the ECE, outperforming the baseline.
 
 ### Reliability Diagram
+
+The plot below shows only the temperature-scaled Transformer, as this version is used in the fianl evaluation.
+
 ![reliability_diagram](reliability_diagram.png)
 
-The transformer displays moderate underconfidence/overconfidence depending on probability bin, but temperature scaling significantly improves calibration. 
+The reliability diagram shows the temperature-scaled Transformer, plotted against the ideal diagonal line representing perfect calibration. After applying temperature scaling, the calibrated model's curve closely tracks the diagonal, meaning its predicted probabilities now correspond well to actual empirical accuracy.
+
+Although the raw (uncalibrated) Transformer curve is not shown in this plot, the improvement in numerical calibration metrics above confirms that the original model was miscalibrated.
+
+  - ECE improved from 0.0343 -> 0.0274
+  - Brier Score improved from 0.6491 -> 0.6484
+
+Because temperature scaling always moves predictions toward better calibration, the improvement in these metrics implies the uncalibrated Transformer assigned probabilities were too extreme. The learned temperature shows the adjustment was moderate but beneficial.
 
 * Learned temperature: 1.0299
 
@@ -231,13 +249,19 @@ The transformer displays moderate underconfidence/overconfidence depending on pr
 Interpretation
   - Knuckleballs are the easiest to predict, but are a rare pitch
   - Four-seam fastballs and sinkers are very common pitches, and have a high accuracy score
-  - Pitches including slider, curveball, and knuckle curve have are very similar pitches, thus causing more variability
+  - Sliders, curveballs, and knuckle curves are very similar pitches, leading to more confusion and lower accuracy
   - The distinct and common pitches are easiest to predict
   - Pitches that are similar to one another are going to have lower accuracy 
    
 ### Per-Pitcher-Type Accuracy
-   Shows which pitchers are easiest/hardest to predict
+
+Shows which pitchers are easiest/hardest to predict
+
+Top 10 Most Predictable Pitchers
+
 ![pitcher-accuracy](top_pitchers.png)
+
+Bottom 10 Least Predictable Pitchers
 
 ![pitcher-accuracy2](bottom_pitchers.png)
 
@@ -247,7 +271,7 @@ Interpretation
 | Zach Britton | 0.863 |
 | Josh Hader | 0.829 |
 |Tyler Clippard | 0.271 | 
-| Clay Bucholz | 0.209|
+| Clay Buchholz | 0.209|
 | Mike Leake | 0.202 |
 
 Interpretation
@@ -270,7 +294,7 @@ Interpretation
 
 ## Model & Data Cards
 
-### Model: Transofmer Pitch Predictor (TPP-Base)
+### Model: Transformer Pitch Predictor (TPP-Base)
 | Field| Description |
 |:----- |:----- |
 | Architecture | Decoder-only Transformer |
