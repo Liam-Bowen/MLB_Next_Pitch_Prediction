@@ -284,7 +284,8 @@ Interpretation
 ### Count-Based Heatmap
    Visualizes how model accuracy changes in different ball-strike counts
 ![heatmap](images/count_heatmap.png)
-  Interpretation
+
+Interpretation
     - Model is strongest in hitter-advantage counts (3-0, 3-1, 2-0)
     - Accuracy drops in pitcher-advantage counts (0-2, 0-1)
     - The count with the lowest overall accuracy is 0-1
