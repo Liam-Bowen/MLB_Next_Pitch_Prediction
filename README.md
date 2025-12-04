@@ -292,6 +292,23 @@ Interpretation
         - Pitchers are going to be more limited in their options when in hitter-advantage counts, thus leading to a more predictable sequence
         - In pitcher-advantage counts, pitchers have more freedom to mix their sequencing more
 
+### Intended Uses
+The model is intended for:
+  - Baseball analytics research
+  - Understanding pitcher tendencies
+
+The model is not intended for:
+  - Real-time in-game decision making
+
+### Ethical & Bias Considersations
+Although the model operates in a sports context, several sources of bias can influence predictions:
+
+1. Data imbalance across pitch types - Rare pitch type (eephus, knuckleball, pitchout) are underrepresented and result in unstable accuracy estimates.
+2. Pitcher representation bias - Some pitchers threw thousands of pitches in the dataset while others have under 100. This creates overfitting to well-represented pitchers and poor generalization for pitchers with small sample sizes.
+3. Historical bias in MLB data - The dataset reflects how baseball was played between 2015-2019, which saw shifts in league-wide pitch usage, team-level developmental philosophies, and a rise in platoon matchups.
+4. Model predictability bias - The model performs significantly better on pitchers with simple arsenals, fastballs, and sinkers, while performing worse on multi-pitch arsenals and breaking balls with similar usage patterns.
+5. Sports gambling concerns - With the growing rise of sports betting and recent crackdowns on players and coaches across sports betting illegally, it is necessary to note that this model is not a tool to cheat the system.  
+
 ## Model & Data Cards
 
 ### Model: Transformer Pitch Predictor (TPP-Base)
