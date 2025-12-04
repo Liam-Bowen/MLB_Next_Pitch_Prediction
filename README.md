@@ -213,7 +213,7 @@ The transformer has substantially better Brier Score than the baseline model, re
 
 ### Reliability Diagram
 
-The plot below shows only the temperature-scaled Transformer, as this version is used in the fianl evaluation.
+The plot below shows only the temperature-scaled Transformer, as this version is used in the final evaluation.
 
 ![reliability_diagram](images/reliability_diagram.png)
 
